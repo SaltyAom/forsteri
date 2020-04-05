@@ -1,0 +1,34 @@
+{
+    "name": "forsteri",
+    "description": "Web component with built-in Virtual DOM in 1KB.",
+    "version": "0.0.0",
+    "main": "index.js",
+    "typings": "dist/index.d.ts",
+    "author": {
+        "name": "SaltyAom"
+    },
+    "keywords": [
+        "forsteri",
+        "web component",
+        "virtual dom",
+        "dom diff",
+        "web component vdom"
+    ],
+    "repository": "https://github.com/SaltyAom/forsteri",
+    "bugs": "https://github.com/SaltyAom/issues",
+    "homepage": "https://github.com/SaltyAom/forsteri",
+    "publishConfig": {
+        "registry": "https://www.npmjs.com/package/forsteri"
+    },
+    "license": "MIT",
+    "scripts": {
+        "build": "yarn build:ts && yarn build:compress && yarn build:size",
+        "build:ts": "tsc",
+        "build:compress": "terser dist/index.js -o dist/index.js --compress --mangle --wrap exports",
+        "build:size": "cd dist && ls -lh"
+    },
+    "devDependencies": {
+        "terser": "^4.6.10",
+        "typescript": "^3.8.3"
+    }
+}
