@@ -2,3 +2,9 @@ node_modules
 demo
 dist
 .DS_Store
+index.js
+index.d.ts
+index.js.map
+pragma/index.js
+pragma/index.js.map
+pragma/index.d.ts

@@ -45,7 +45,7 @@ const createElement = (
         ...childNodes: ForsteriVNode[]
     ): ForsteriNode => ({
         nodeName: nodeName.toLowerCase(),
-        attributes,
+        attributes: attributes === null ? false : attributes,
         childNodes
     }),
     keys = (object: Object) => Object.keys(object),
@@ -402,3 +402,8 @@ const createElement = (
     }
 
 export { createElement, registerComponent, ForsteriComponent }
+
+export default {
+    createElement,
+    registerComponent
+}
