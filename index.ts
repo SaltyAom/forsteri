@@ -314,17 +314,13 @@ const h = (
                 } catch (err) {
                     /** Root of Shadow DOM return parentElement as null.
                      * In case of Fragment as root, we need to remove each one.
-                     * We can't remove ref since ref is needed to point at other node.
-                     * So, we remove everything except ref, thus replace ref as last operation.
                      **/
+                    let root = ref.getRootNode() as ShadowRoot
 
-                    ref.getRootNode().childNodes.forEach((child) => {
-                        if (!child.isSameNode(ref))
-                            ref.getRootNode().removeChild(child)
-                    })
+                    while(root.firstChild)
+                        root.removeChild(root.firstChild)
 
-                    ref.getRootNode().replaceChild(create(node), ref)
-
+                    root.appendChild(create(node))
                     return
                 }
 
@@ -340,7 +336,8 @@ const h = (
             )
 
             if (childNodes.length >= ref.childNodes.length) return
-
+            
+            /* Remove child in-case of old child which over */
             Array.apply(
                 null,
                 new Array(ref.childNodes.length - childNodes.length)
