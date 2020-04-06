@@ -240,9 +240,39 @@ const h = (
                 : element.appendChild(create(child as ForsteriNode))
         })
 
-        element.vnode = _element
+        let _vnode = mapFragment(_element as ForsteriNode__EnsureDiff).flat(
+            Infinity
+        )
+
+        if (nodeName !== 'fragment')
+            element.vnode = Object.assign(_element, { childNodes: _vnode })
 
         return element
+    },
+    mapFragment = (vnode: ForsteriNode__EnsureDiff): any[] => {
+        /**
+         * We only need to map 2 level for each vNode.
+         * Mapping all the node is unnecessary since each vNode will map itself anyway.
+         * At this rate, we only need to map what we need thus ensure more performant.
+         */
+        return vnode.childNodes.map((child) => {
+            if (
+                child.nodeName === 'fragment' &&
+                (child as ForsteriNode__EnsureDiff).childNodes.length
+            )
+                return (child as ForsteriNode__EnsureDiff).childNodes.map(
+                    (child) => {
+                        if (child.nodeName === 'fragment')
+                            return mapFragment(
+                                child as ForsteriNode__EnsureDiff
+                            )[0]
+
+                        return child
+                    }
+                )
+
+            return child
+        })
     },
     render = (node: ForsteriNode, element: ShadowRoot) => {
         if (!element.children.length) return element.appendChild(create(node))
@@ -276,16 +306,26 @@ const h = (
 
             if (nodeName !== `${ref.nodeName}`.toLowerCase())
                 try {
+                    /* Can never be Fragment, use normal method */
                     return (ref.parentElement as ForsteriElement).replaceChild(
                         create(node),
                         ref
                     )
                 } catch (err) {
-                    /* Root of Shadow DOM return parentElement as null */
-                    return (ref.getRootNode() as ShadowRoot).replaceChild(
-                        create(node),
-                        ref.getRootNode().childNodes[0]
-                    )
+                    /** Root of Shadow DOM return parentElement as null.
+                     * In case of Fragment as root, we need to remove each one.
+                     * We can't remove ref since ref is needed to point at other node.
+                     * So, we remove everything except ref, thus replace ref as last operation.
+                     **/
+
+                    ref.getRootNode().childNodes.forEach((child) => {
+                        if (!child.isSameNode(ref))
+                            ref.getRootNode().removeChild(child)
+                    })
+
+                    ref.getRootNode().replaceChild(create(node), ref)
+
+                    return
                 }
 
             applyAttributes(
@@ -365,11 +405,11 @@ const h = (
                                             fragment,
                                             element
                                         )
-                                    // else
-                                    //     this.element.replaceChild(
-                                    //         fragment,
-                                    //         element
-                                    //     )
+                                    else
+                                        this.element.replaceChild(
+                                            fragment,
+                                            element
+                                        )
                                 })
                         })
                     )
@@ -378,7 +418,7 @@ const h = (
                         childList: true,
                         subtree: true,
                         characterData: true,
-                        attributes: true
+                        attributes: true,
                     })
                 }
 
