@@ -18,6 +18,15 @@ interface ForsteriElement__EnsureElement extends HTMLElement {
     vnode?: ForsteriVNode
 }
 
+interface ForsteriElement__Fragment extends DocumentFragment {
+    vnode?: ForsteriVNode
+}
+
+interface ForsteriElement__ReflectElement extends DocumentFragment {
+    staticChild: ChildNode[]
+    vnode?: ForsteriVNode
+}
+
 type Attributes__EnsureDiff = Record<
     string,
     string | number | boolean | Object | Function
@@ -39,14 +48,14 @@ interface State<StateType extends Object = {}> {
     ) => StateType[T]
 }
 
-const createElement = (
+const h = (
         nodeName: string,
-        attributes = {},
+        attributes: Object | null = {},
         ...childNodes: ForsteriVNode[]
     ): ForsteriNode => ({
         nodeName: nodeName.toLowerCase(),
         attributes: attributes === null ? false : attributes,
-        childNodes
+        childNodes,
     }),
     keys = (object: Object) => Object.keys(object),
     isBlank = (object: Object) => keys(object).length,
@@ -57,15 +66,15 @@ const createElement = (
         oldAttributes: Attributes__EnsureDiff
     ): Attributes__EnsureDiff => {
         let _attributes: Attributes__EnsureDiff = {},
-            intersect = keys(attributes).filter(property =>
+            intersect = keys(attributes).filter((property) =>
                 keys(oldAttributes).includes(property)
             )
 
-        keys(oldAttributes).filter(property => {
+        keys(oldAttributes).filter((property) => {
             if (!intersect.includes(property)) _attributes[property] = ''
         })
 
-        intersect.forEach(property => {
+        intersect.forEach((property) => {
             if (typeof attributes[property] === 'object') {
                 let comparedSubsetAttributes = compareAttributes(
                     attributes[property] as Attributes__EnsureDiff,
@@ -142,8 +151,8 @@ const createElement = (
             )
 
             return keys(diffedNode)
-                .map(key => (diffedNode as any)[key])
-                .filter(child => child !== false).length
+                .map((key) => (diffedNode as any)[key])
+                .filter((child) => child !== false).length
                 ? ((_childNodes as ForsteriVNode[] | false[])[index] = false)
                 : ((_childNodes as ForsteriVNode[] | false[])[
                       index
@@ -160,7 +169,9 @@ const createElement = (
         return {
             nodeName: false,
             attributes: isBlankThenReturn(_attributes),
-            childNodes: isBlankThenReturn(_childNodes) as ForsteriNode[] | false
+            childNodes: isBlankThenReturn(_childNodes) as
+                | ForsteriNode[]
+                | false,
         }
     },
     applyAttributes = (
@@ -168,7 +179,7 @@ const createElement = (
         ref: ForsteriElement__EnsureElement,
         shallow = true
     ) => {
-        keys(attributes).forEach(property => {
+        keys(attributes).forEach((property) => {
             if (typeof attributes[property] === 'object')
                 applyAttributes(
                     attributes[property] as Attributes__EnsureDiff,
@@ -199,20 +210,29 @@ const createElement = (
             else (ref as any)[property] = attributes[property]
         })
     },
-    create = (_element: ForsteriNode | string): ForsteriElement | Text => {
+    create = (
+        _element: ForsteriNode | string
+    ): ForsteriElement | ForsteriElement__Fragment | Text => {
         if (isString(_element))
             return document.createTextNode(_element as string)
 
         let {
                 nodeName,
                 attributes,
-                childNodes
+                childNodes,
             } = _element as ForsteriNode__EnsureDiff,
-            element: ForsteriElement__EnsureElement = document.createElement(
-                nodeName
-            )
+            element:
+                | ForsteriElement__EnsureElement
+                | ForsteriElement__Fragment =
+                nodeName === 'fragment'
+                    ? document.createDocumentFragment()
+                    : document.createElement(nodeName)
 
-        applyAttributes(attributes as Attributes__EnsureDiff, element)
+        if (nodeName !== 'fragment')
+            applyAttributes(
+                attributes as Attributes__EnsureDiff,
+                element as ForsteriElement__EnsureElement
+            )
 
         childNodes.forEach((child: ForsteriVNode) => {
             isString(child)
@@ -287,7 +307,7 @@ const createElement = (
             )
                 .map((_, index) => index + childNodes.length)
                 .reverse()
-                .forEach(index => {
+                .forEach((index) => {
                     try {
                         ref.removeChild(ref.childNodes[index])
                     } catch (err) {
@@ -321,10 +341,44 @@ const createElement = (
 
                     this.state = Object.assign({}, state)
                     this.props = {}
-                    props?.forEach(prop => (this.props[prop] = ''))
+                    props?.forEach((prop) => (this.props[prop] = ''))
 
                     this.element = this.attachShadow({
-                        mode: 'closed'
+                        mode: 'closed',
+                    })
+
+                    let observer = new MutationObserver((mutationsList) =>
+                        mutationsList.forEach(() => {
+                            this.element
+                                .querySelectorAll('children')
+                                .forEach((element) => {
+                                    let fragment = document.createDocumentFragment()
+
+                                    this.childNodes.forEach((child) => {
+                                        fragment.appendChild(
+                                            child.cloneNode(true)
+                                        )
+                                    })
+
+                                    if (element.parentElement !== null)
+                                        element.parentElement.replaceChild(
+                                            fragment,
+                                            element
+                                        )
+                                    // else
+                                    //     this.element.replaceChild(
+                                    //         fragment,
+                                    //         element
+                                    //     )
+                                })
+                        })
+                    )
+
+                    observer.observe(this, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true,
+                        attributes: true
                     })
                 }
 
@@ -397,13 +451,13 @@ const createElement = (
                     element
                 )
                 return _state
-            }
+            },
         }
     }
 
-export { createElement, registerComponent, ForsteriComponent }
+export { h, registerComponent, ForsteriComponent }
 
 export default {
-    createElement,
-    registerComponent
+    h,
+    registerComponent,
 }

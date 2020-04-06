@@ -8,7 +8,7 @@ interface ForsteriNode {
 
 const createElement = (
     nodeName: string,
-    attributes = {},
+    attributes: Object | null = {},
     ...childNodes: ForsteriVNode[]
 ): ForsteriNode => ({
     nodeName: nodeName.toLowerCase(),
