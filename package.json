@@ -1,7 +1,7 @@
 {
     "name": "forsteri",
     "description": "Web component with built-in Virtual DOM in 1KB.",
-    "version": "0.0.12",
+    "version": "0.0.13",
     "main": "index.js",
     "typings": "dist/index.d.ts",
     "keywords": [
@@ -22,10 +22,18 @@
         "build:compress": "terser dist/index.js -o dist/index.js --compress --mangle --wrap exports",
         "build:size": "cd dist && ls -lh",
         "build:pragma": "tsc --project tsconfig-pragma.json",
-        "release": "yarn build && yarn publish"
+        "release": "yarn test && yarn build && yarn publish --non-interactive",
+        "test": "jest",
+        "test:clear": "jest --clearCache"
     },
     "devDependencies": {
+        "@babel/preset-env": "^7.9.0",
+        "@babel/preset-typescript": "^7.9.0",
+        "@types/jest": "^25.2.1",
+        "jest": "^25.2.7",
+        "jest-environment-jsdom-sixteen": "^1.0.3",
         "terser": "^4.6.10",
+        "ts-jest": "^25.3.1",
         "typescript": "^3.8.3"
     }
 }

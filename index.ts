@@ -50,7 +50,7 @@ const h = (
     ): ForsteriNode => ({
         nodeName: nodeName.toLowerCase(),
         attributes: attributes === null ? false : attributes,
-        childNodes,
+        childNodes
     }),
     keys = (object: Object) => Object.keys(object),
     isBlank = (object: Object) => keys(object).length,
@@ -100,7 +100,7 @@ const h = (
             return {
                 nodeName: false,
                 attributes: false,
-                childNodes: false,
+                childNodes: false
             }
 
         if (
@@ -127,22 +127,19 @@ const h = (
 
             /* Child Diff */
         ;(current.childNodes as ForsteriVNode[]).forEach((child, index) => {
-            if (isString(child))
-                return isString(
-                    (old as ForsteriNode__EnsureDiff).childNodes[index]
-                )
-                    ? child !==
-                      (old as ForsteriNode__EnsureDiff).childNodes[index]
+            if (isString(child)) {
+                let _old = (old as ForsteriNode__EnsureDiff).childNodes[index]
+
+                if (isString(_old))
+                    return child !== _old
                         ? ((_childNodes as ForsteriVNode[] | false[])[
                               index
-                          ] = false)
+                          ] = child)
                         : ((_childNodes as ForsteriVNode[] | false[])[
                               index
                           ] = false)
-                    : ((_childNodes as ForsteriVNode[] | false[])[
-                          index
-                      ] = false)
-            else if (
+                else (_childNodes as ForsteriVNode[] | false[])[index] = child
+            } else if (
                 isString((old as ForsteriNode__EnsureDiff).childNodes[index])
             )
                 return ((_childNodes as ForsteriVNode[] | false[])[
@@ -160,13 +157,18 @@ const h = (
                 (old as ForsteriNode__EnsureDiff).childNodes[index]
             )
 
-            return keys(diffedNode)
-                .map((key) => (diffedNode as any)[key])
-                .filter((child) => child !== false).length
-                ? ((_childNodes as ForsteriVNode[] | false[])[index] = false)
-                : ((_childNodes as ForsteriVNode[] | false[])[
-                      index
-                  ] = diffedNode)
+            return (
+                keys(diffedNode)
+                    .map((key) => (diffedNode as any)[key])
+                    // If every key (nodeName, attributes, childNodes is false)
+                    .filter((child) => child === false).length === 3
+                    ? ((_childNodes as ForsteriVNode[] | false[])[
+                          index
+                      ] = false)
+                    : ((_childNodes as ForsteriVNode[] | false[])[
+                          index
+                      ] = diffedNode)
+            )
         })
 
         if (
@@ -179,9 +181,7 @@ const h = (
         return {
             nodeName: false,
             attributes: isBlankThenReturn(_attributes),
-            childNodes: isBlankThenReturn(_childNodes) as
-                | ForsteriNode[]
-                | false,
+            childNodes: isBlankThenReturn(_childNodes) as ForsteriNode[] | false
         }
     },
     applyAttributes = (
@@ -230,7 +230,7 @@ const h = (
         let {
                 nodeName,
                 attributes,
-                childNodes,
+                childNodes
             } = _element as ForsteriNode__EnsureDiff,
             element:
                 | ForsteriElement__EnsureElement
@@ -318,10 +318,7 @@ const h = (
                         .vnode as ForsteriNode
                 )
 
-            if (nodeName === 'children') {
-                console.log(nodeName, ref)
-                return
-            }
+            if (nodeName === 'children') return
 
             if (nodeName !== `${ref.nodeName}`.toLowerCase())
                 if (ref.parentElement !== null)
@@ -397,7 +394,7 @@ const h = (
         component,
         view,
         state,
-        props,
+        props
     }: {
         component: string
         view: ForsteriComponent<StateType, PropsType>
@@ -421,7 +418,7 @@ const h = (
                         props?.forEach((prop) => (this.props[prop] = ''))
 
                         this.element = this.attachShadow({
-                            mode: 'closed',
+                            mode: 'closed'
                         })
 
                         render(
@@ -438,7 +435,8 @@ const h = (
                         )
 
                         requestAnimationFrame(() => {
-                            this.style.visibility = 'hidden'
+                            if (this.element.querySelectorAll('link').length)
+                                this.style.visibility = 'hidden'
 
                             let link: 0[] = []
                             this.element
@@ -489,7 +487,7 @@ const h = (
                             childList: true,
                             subtree: true,
                             characterData: true,
-                            attributes: true,
+                            attributes: true
                         })
                     }
 
@@ -592,13 +590,20 @@ const h = (
                     })
                 })
                 return _state
-            },
+            }
         }
     }
 
-export { h, registerComponent, ForsteriComponent }
+export {
+    h,
+    registerComponent,
+    ForsteriComponent,
+    diff,
+    compareAttributes,
+    create
+}
 
 export default {
     h,
-    registerComponent,
+    registerComponent
 }
