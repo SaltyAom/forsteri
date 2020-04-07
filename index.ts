@@ -458,24 +458,21 @@ const h = (
                             this.element
                         )
 
+                        /* Defer until styling loaded */
                         requestAnimationFrame(() => {
                             if (this.element.querySelectorAll('link').length)
                                 this.style.visibility = 'hidden'
-
-                            let link: 0[] = []
-                            this.element
-                                .querySelectorAll('link')
-                                .forEach((css) => {
-                                    link.push(0)
-                                    css.addEventListener('load', () => {
-                                        link.pop()
-                                        if (!link.length)
-                                            requestAnimationFrame(
-                                                () =>
-                                                    (this.style.visibility = '')
-                                            )
+                        })
+                        let link: 0[] = []
+                        this.element.querySelectorAll('link').forEach((css) => {
+                            link.push(0)
+                            css.addEventListener('load', () => {
+                                link.pop()
+                                if (!link.length)
+                                    requestAnimationFrame(() => {
+                                        this.style.visibility = ''
                                     })
-                                })
+                            })
                         })
 
                         this.observer = new MutationObserver((mutationsList) =>
