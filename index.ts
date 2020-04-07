@@ -1,14 +1,14 @@
 type ForsteriVNode = ForsteriNode | string
 
-interface ForsteriNode {
+interface ForsteriNode<T = Object> {
     nodeName: string | false
     attributes: Object | false
     childNodes: ForsteriVNode[] | false
 }
 
-interface ForsteriNode__EnsureDiff {
+interface ForsteriNode__EnsureDiff<T = Object> {
     nodeName: string
-    attributes: Object
+    attributes: T
     childNodes: ForsteriNode[]
 }
 
@@ -19,11 +19,6 @@ interface ForsteriElement__EnsureElement extends HTMLElement {
 }
 
 interface ForsteriElement__Fragment extends DocumentFragment {
-    vnode?: ForsteriVNode
-}
-
-interface ForsteriElement__ReflectElement extends DocumentFragment {
-    staticChild: ChildNode[]
     vnode?: ForsteriVNode
 }
 
@@ -101,6 +96,13 @@ const h = (
         return _attributes
     },
     diff = (current: ForsteriVNode, old: ForsteriNode): ForsteriNode => {
+        if (typeof current !== 'string' && current.nodeName === 'children')
+            return {
+                nodeName: false,
+                attributes: false,
+                childNodes: false,
+            }
+
         if (
             typeof current === 'string' ||
             typeof old === 'string' ||
@@ -122,6 +124,8 @@ const h = (
                 current.attributes as Attributes__EnsureDiff,
                 old.attributes as Attributes__EnsureDiff
             ) as Attributes__EnsureDiff
+
+            /* Child Diff */
         ;(current.childNodes as ForsteriVNode[]).forEach((child, index) => {
             if (isString(child))
                 return isString(
@@ -144,6 +148,12 @@ const h = (
                 return ((_childNodes as ForsteriVNode[] | false[])[
                     index
                 ] = child)
+            else if (
+                (child as ForsteriNode__EnsureDiff).nodeName === 'children'
+            )
+                return ((_childNodes as ForsteriVNode[] | false[])[
+                    index
+                ] = false)
 
             let diffedNode = diff(
                 child,
@@ -199,6 +209,7 @@ const h = (
                         (ref.vnode as any)[eventName]
                     )
                 } catch (err) {
+                } finally {
                     ref.addEventListener(
                         eventName,
                         attributes[property] as (event: Event) => any,
@@ -274,7 +285,10 @@ const h = (
             return child
         })
     },
-    render = (node: ForsteriNode, element: ShadowRoot) => {
+    render = (
+        node: ForsteriNode,
+        element: ShadowRoot | ForsteriElement__EnsureElement
+    ) => {
         if (!element.children.length) return element.appendChild(create(node))
 
         let applyDiff = (node: ForsteriNode | string, ref: ForsteriElement) => {
@@ -304,88 +318,206 @@ const h = (
                         .vnode as ForsteriNode
                 )
 
+            if (nodeName === 'children') {
+                console.log(nodeName, ref)
+                return
+            }
+
             if (nodeName !== `${ref.nodeName}`.toLowerCase())
-                try {
-                    /* Can never be Fragment, use normal method */
+                if (ref.parentElement !== null)
                     return (ref.parentElement as ForsteriElement).replaceChild(
                         create(node),
                         ref
                     )
-                } catch (err) {
-                    /** Root of Shadow DOM return parentElement as null.
-                     * In case of Fragment as root, we need to remove each one.
-                     **/
-                    let root = ref.getRootNode() as ShadowRoot
-
-                    while(root.firstChild)
-                        root.removeChild(root.firstChild)
-
-                    root.appendChild(create(node))
-                    return
-                }
+                else
+                    return (ref.getRootNode() as ForsteriElement).replaceChild(
+                        create(node),
+                        ref
+                    )
 
             applyAttributes(
                 diffed.attributes as Attributes__EnsureDiff,
                 ref as ForsteriElement__EnsureElement
             )
 
-            childNodes.forEach((child, index) =>
-                typeof ref.childNodes[index] !== 'undefined'
-                    ? applyDiff(child, ref.childNodes[index] as ForsteriElement)
-                    : ref.appendChild(create(child))
-            )
+            childNodes.forEach((child, index) => {
+                if (typeof ref.childNodes[index] !== 'undefined') {
+                    if (
+                        typeof ((ref as ForsteriElement__EnsureElement)
+                            .vnode as ForsteriNode__EnsureDiff).childNodes[
+                            index
+                        ].nodeName === 'undefined' ||
+                        (((ref as ForsteriElement__EnsureElement)
+                            .vnode as ForsteriNode__EnsureDiff).childNodes[
+                            index
+                        ].nodeName as string).toLowerCase() !== 'children'
+                    )
+                        applyDiff(
+                            child,
+                            ref.childNodes[index] as ForsteriElement
+                        )
+                } else ref.appendChild(create(child))
+            })
 
             if (childNodes.length >= ref.childNodes.length) return
-            
+
             /* Remove child in-case of old child which over */
-            Array.apply(
-                null,
-                new Array(ref.childNodes.length - childNodes.length)
+            /* Don't remove children */
+            if (
+                (((ref as ForsteriElement__EnsureElement)
+                    .vnode as ForsteriNode__EnsureDiff).childNodes[0]
+                    .nodeName as string).toLowerCase() !== 'children'
             )
-                .map((_, index) => index + childNodes.length)
-                .reverse()
-                .forEach((index) => {
-                    try {
+                Array.apply(
+                    null,
+                    new Array(ref.childNodes.length - childNodes.length)
+                )
+                    .map((_, index) => index + childNodes.length)
+                    .reverse()
+                    .forEach((index) => {
                         ref.removeChild(ref.childNodes[index])
-                    } catch (err) {
-                        ;(ref.getRootNode() as ShadowRoot).removeChild(
-                            ref.childNodes[index]
-                        )
-                    }
-                })
+                    })
         }
 
-        applyDiff(node, element.childNodes[0] as ForsteriElement)
+        if (node.nodeName === 'fragment')
+            (node as ForsteriNode__EnsureDiff).childNodes.forEach(
+                (child, index) => {
+                    applyDiff(
+                        child,
+                        element.childNodes[index] as ForsteriElement
+                    )
+                }
+            )
+        else applyDiff(node, element.childNodes[0] as ForsteriElement)
     },
     registerComponent = <
-        StateType extends object = {},
-        PropsType extends readonly string[] = []
-    >(
-        elementName: string,
-        component: ForsteriComponent<StateType>,
-        state?: StateType,
+        StateType extends object,
+        PropsType extends readonly string[]
+    >({
+        component,
+        view,
+        state,
+        props,
+    }: {
+        component: string
+        view: ForsteriComponent<StateType, PropsType>
+        state?: StateType
         props?: PropsType
-    ) => {
-        customElements.define(
-            elementName,
-            class Forsteri extends HTMLElement {
-                element: ShadowRoot
-                state: StateType
-                props: any
+    }) => {
+        if (!customElements.get(component))
+            customElements.define(
+                component,
+                class Forsteri extends HTMLElement {
+                    element: ShadowRoot | this
+                    state: StateType
+                    props: any
+                    observer: MutationObserver
 
-                constructor() {
-                    super()
+                    constructor() {
+                        super()
 
-                    this.state = Object.assign({}, state)
-                    this.props = {}
-                    props?.forEach((prop) => (this.props[prop] = ''))
+                        this.state = Object.assign({}, state)
+                        this.props = {}
+                        props?.forEach((prop) => (this.props[prop] = ''))
 
-                    this.element = this.attachShadow({
-                        mode: 'closed',
-                    })
+                        this.element = this.attachShadow({
+                            mode: 'closed',
+                        })
 
-                    let observer = new MutationObserver((mutationsList) =>
-                        mutationsList.forEach(() => {
+                        render(
+                            view(
+                                composeState(
+                                    this.state,
+                                    this.props,
+                                    view,
+                                    this.element
+                                ),
+                                this.props
+                            ),
+                            this.element
+                        )
+
+                        requestAnimationFrame(() => {
+                            this.style.visibility = 'hidden'
+
+                            let link: 0[] = []
+                            this.element
+                                .querySelectorAll('link')
+                                .forEach((css) => {
+                                    link.push(0)
+                                    css.addEventListener('load', () => {
+                                        link.pop()
+                                        if (!link.length)
+                                            requestAnimationFrame(
+                                                () =>
+                                                    (this.style.visibility = '')
+                                            )
+                                    })
+                                })
+                        })
+
+                        this.observer = new MutationObserver((mutationsList) =>
+                            mutationsList.forEach(() => {
+                                requestAnimationFrame(() =>
+                                    this.element
+                                        .querySelectorAll('children')
+                                        .forEach((element) => {
+                                            let fragment = document.createDocumentFragment()
+
+                                            this.childNodes.forEach((child) => {
+                                                fragment.appendChild(
+                                                    child.cloneNode(true)
+                                                )
+                                            })
+
+                                            if (element.parentElement !== null)
+                                                element.parentElement.replaceChild(
+                                                    fragment,
+                                                    element
+                                                )
+                                            else
+                                                this.element.replaceChild(
+                                                    fragment,
+                                                    element
+                                                )
+                                        })
+                                )
+                            })
+                        )
+
+                        this.observer.observe(this, {
+                            childList: true,
+                            subtree: true,
+                            characterData: true,
+                            attributes: true,
+                        })
+                    }
+
+                    static get observedAttributes() {
+                        return typeof props !== 'undefined' ? props : []
+                    }
+
+                    attributeChangedCallback(
+                        name: string,
+                        _: string,
+                        prop: string
+                    ) {
+                        this.props[name] = prop
+
+                        requestAnimationFrame(() => {
+                            render(
+                                view(
+                                    composeState(
+                                        this.state,
+                                        this.props,
+                                        view,
+                                        this.element
+                                    ),
+                                    this.props
+                                ),
+                                this.element
+                            )
+
                             this.element
                                 .querySelectorAll('children')
                                 .forEach((element) => {
@@ -409,57 +541,13 @@ const h = (
                                         )
                                 })
                         })
-                    )
+                    }
 
-                    observer.observe(this, {
-                        childList: true,
-                        subtree: true,
-                        characterData: true,
-                        attributes: true,
-                    })
+                    disconnectedCallback() {
+                        this.observer.disconnect()
+                    }
                 }
-
-                static get observedAttributes() {
-                    return typeof props !== 'undefined' ? props : []
-                }
-
-                attributeChangedCallback(
-                    name: string,
-                    __: string,
-                    prop: string
-                ) {
-                    this.props[name] = prop
-
-                    render(
-                        component(
-                            composeState(
-                                this.state,
-                                this.props,
-                                component,
-                                this.element
-                            ),
-                            this.props
-                        ),
-                        this.element
-                    )
-                }
-
-                connectedCallback() {
-                    render(
-                        component(
-                            composeState(
-                                this.state,
-                                this.props,
-                                component,
-                                this.element
-                            ),
-                            this.props
-                        ),
-                        this.element
-                    )
-                }
-            }
-        )
+            )
     },
     composeState = <
         StateType extends Object = {},
@@ -467,8 +555,8 @@ const h = (
     >(
         state: StateType,
         props: PropsType,
-        component: ForsteriComponent<StateType, PropsType>,
-        element: ShadowRoot
+        view: ForsteriComponent<StateType, PropsType>,
+        element: ShadowRoot | ForsteriElement__EnsureElement
     ): State<StateType> => {
         let _state: any = Object.assign({}, state),
             _props = Object.assign({}, props)
@@ -480,13 +568,29 @@ const h = (
                 value: StateType[T]
             ): StateType[T] => {
                 _state[property] = value
-                render(
-                    component(
-                        composeState(_state, _props, component, element),
-                        _props as any
-                    ),
-                    element
-                )
+                requestAnimationFrame(() => {
+                    render(
+                        view(
+                            composeState(_state, _props, view, element),
+                            _props as any
+                        ),
+                        element as ForsteriElement__EnsureElement | ShadowRoot
+                    )
+
+                    element.querySelectorAll('children').forEach((child) => {
+                        let fragment = document.createDocumentFragment()
+
+                        ;(element.getRootNode() as ShadowRoot).host.childNodes.forEach(
+                            (child: ChildNode) => {
+                                fragment.appendChild(child.cloneNode(true))
+                            }
+                        )
+
+                        if (child.parentElement !== null)
+                            child.parentElement.replaceChild(fragment, child)
+                        else child.getRootNode().replaceChild(fragment, child)
+                    })
+                })
                 return _state
             },
         }
