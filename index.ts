@@ -311,12 +311,18 @@ const h = (
                         )
                     }
 
-            let { nodeName, childNodes } = node as ForsteriNode__EnsureDiff,
-                diffed = diff(
-                    node as ForsteriNode,
-                    (ref as ForsteriElement__EnsureElement)
-                        .vnode as ForsteriNode
-                )
+            let { nodeName, childNodes } = node as ForsteriNode__EnsureDiff
+
+            if (
+                typeof ref === 'undefined' ||
+                typeof (ref as any).vnode === 'undefined'
+            )
+                return
+
+            let diffed = diff(
+                node as ForsteriNode,
+                (ref as ForsteriElement__EnsureElement).vnode as ForsteriNode
+            )
 
             if (nodeName === 'children') return
 

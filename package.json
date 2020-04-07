@@ -1,7 +1,7 @@
 {
     "name": "forsteri",
     "description": "Web component with built-in Virtual DOM in 1KB.",
-    "version": "0.0.13",
+    "version": "0.0.15",
     "main": "index.js",
     "typings": "dist/index.d.ts",
     "keywords": [
