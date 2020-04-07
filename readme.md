@@ -7,7 +7,7 @@ Reusable reactive Web Component with Virtual DOM in 1KB (gzipped).
 Virtual DOM has been introduced to Web Development for many year. The key take away is to `update only neccessary` thus lead a great step forward in web development.
 
 Each library has it's own ecosystem and trying to make itself reusable. But the one take away is, they could only reuse in it's own environment which means working across multiple library on large-scale project is lock down.
-  
+
 But how could we make a component to be reusable and still gaining benefit from Virtual DOM? So just create one, a simple and light-weight one which connect each component across many libraries.
 
 ## Reusable + Virtual DOM
@@ -448,28 +448,23 @@ Or better, we could use ternary operator to determined inline JSX.
 import { h, registerComponent } from 'forsteri'
 
 const state = {
-		counter: 0
-	},
-    Counter = ({
-    	state: { counter },
-        set
-    }) => (
-      	<section>
-          	<h1>{counter}</h1>
-            { counter >= 10 ?
-            	<fragment />
-            :
-                <button
-                    onClick={() => set('counter', counter + 1)
-                >
-                  	Increase
-              	</button>
-        	}
-      	</section>
-  	)
+        counter: 0
+    },
+    Counter = ({ state: { counter }, set }) => (
+        <section>
+            <h1>{counter}</h1>
+            {counter >= 10 ? (
+                <fragment />
+            ) : (
+                <button onClick={() => set('counter', counter + 1)}>
+                    Increase
+                </button>
+            )}
+        </section>
+    )
 
 registerComponent({
-	component: 'my-counter',
+    component: 'my-counter',
     view: Counter
 })
 ```
