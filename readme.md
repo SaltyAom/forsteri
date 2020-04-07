@@ -261,7 +261,7 @@ In real-world, state change very often as its designed to be. State is a variabl
 Let's say we create a counter. Every time we click a button, a counter is increased, but how would we do it? We use `set()`, a helper function to update state.
 
 First, let's define a view and state.
-```javscript
+```javascript
 import { h, registerComponent } from 'forsteri'
 
 const state = {
@@ -301,7 +301,7 @@ Then we attach event and invoke `set()`.
 ```
 
 In result this is how we looks like:
-```javscript
+```javascript
 import { h, registerComponent } from 'forsteri'
 
 const state = {
@@ -375,7 +375,7 @@ We could determined and control how our view looks like based on `state` and `pr
 Let's say on previous counter element, we would like to hide it's increase button.
 
 We simply use if else to determined the view:
-```javscript
+```javascript
 import { h, registerComponent } from 'forsteri'
 
 const state = {
@@ -393,15 +393,15 @@ const state = {
         )
     
     return(
-      	<section>
-          	<h1>{counter}</h1>
-          	<button 
-            	onClick={() => set('counter', counter + 1)
+        <section>
+            <h1>{counter}</h1>
+                <button 
+                onClick={() => set('counter', counter + 1)}
             >
-            	Increase
+                Increase
             </button>
-      	</section>
-  	)
+        </section>
+    )
 }
 
 registerComponent({
@@ -411,7 +411,7 @@ registerComponent({
 ```
 
 Or better, we could use ternary operator to determined inline JSX.
-```javscript
+```javascript
 import { h, registerComponent } from 'forsteri'
 
 const state = {
