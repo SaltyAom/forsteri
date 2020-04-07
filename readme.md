@@ -160,17 +160,17 @@ Forsteri is inspired by React's Function Component. Defining a simple function w
 
 ```javascript
 const Card = <
-	StateType extends Object,
+    StateType extends Object,
     PropsType extends string[] as const
 >(
-	stateObject: State<StateType> {
-      	state: StateType,
-      	set: (
-          	key: keyof StateType,
-          	value: StateType[keyof StateType]
-      	) => StateType
+    stateObject: State<StateType> {
+        state: StateType,
+        set: (
+            key: keyof StateType,
+            value: StateType[keyof StateType]
+        ) => StateType
     },
-	props: Record<PropsType[number], string>)
+    props: Record<PropsType[number], string>)
 ) => ForsteriVNode
 ```
 
@@ -207,7 +207,7 @@ It receive these following parameter:
 
 ```javascript
 registerComponent({
-	component: string,         // Define component's name
+    component: string,         // Define component's name
     view: ForsteriComponent,   // Function component which we declared
     state?: State<StateType>,  // State
     props?: Props<PropsType>   // Props
@@ -256,10 +256,10 @@ const Card = (state) => <h1>Hello World</h1>
 
 // state
 {
- 	state: {
-    	message: 'Hello World'
-   	},
-   	set: (stateName, newValue) => newValue
+    state: {
+        message: 'Hello World'
+    },
+    set: (stateName, newValue) => newValue
 }
 ```
 
@@ -334,24 +334,24 @@ In result this is how we looks like:
 import { h, registerComponent } from 'forsteri'
 
 const state = {
-		counter: 0
-	},
+        counter: 0
+    },
     Counter = ({
-    	state: { counter },
+        state: { counter },
         set
     }) => (
-      	<section>
-          	<h1>{counter}</h1>
-          	<button
-            	onClick={() => set('counter', counter + 1)
+        <section>
+            <h1>{counter}</h1>
+            <button
+            	onClick={() => set('counter', counter + 1)}
             >
-            	Increase
+                Increase
             </button>
-      	</section>
-  	)
+        </section>
+    )
 
 registerComponent({
-	component: 'my-counter',
+    component: 'my-counter',
     view: Counter
 })
 ```
@@ -392,7 +392,7 @@ We can use object destructing to get it's value:
 
 ```javascript
 const Card = (_, { class }) => (
-	<section class={class}></section>
+    <section class={class}></section>
 )
 ```
 
@@ -486,8 +486,8 @@ let View = () => <fragment />
 // Normally we couldn't have multiple root node.
 // With fragment, we could render multiple root node.
 let Card = () (
-	<fragment>
-    	<div>Hello World</div>
+    <fragment>
+        <div>Hello World</div>
         <button>Nice Button</button>
     </fragment>
 )
@@ -499,7 +499,7 @@ Children is the most basic concept in HTML.
 
 ```javascript
 <my-card>
-	<h1>Hello World</h1>
+    <h1>Hello World</h1>
 </my-card>
 
 let Card = () <children />
@@ -516,7 +516,7 @@ External stylesheet wouldn't affected content inside Shadow DOM which also appli
 ```javascript
 // style.css
 h1 {
-	color: red;
+    color: red;
 }
 
 // index.html
@@ -531,9 +531,9 @@ To use external stylesheet in Milk Component, you can assign stylesheet in the c
 
 ```javascript
 let Card = () => (
-	<fragment>
-		<link rel='stylesheet' href='style.css'>
-	    <h1>Title</h1> // Affected by style.css
+    <fragment>
+        <link rel='stylesheet' href='style.css'>
+        <h1>Title</h1> // Affected by style.css
     </fragment>
 )
 ```
