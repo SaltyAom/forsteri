@@ -64,23 +64,23 @@ describe('Register Component', () => {
         expect(_element.childNodes[0]).toEqual(h1)
     })
 
-    it('Should reflect children', () => {
-        let view = () => h('children')
+    // it('Should reflect children', () => {
+    //     let view = () => h('children')
 
-        let h1 = document.createElement('h1')
-        h1.appendChild(document.createTextNode('Hello World'))
+    //     let h1 = document.createElement('h1')
+    //     h1.appendChild(document.createTextNode('Hello World'))
 
-        registerComponent({
-            component: 'forsteri-element-5',
-            view
-        })
+    //     registerComponent({
+    //         component: 'forsteri-element-5',
+    //         view
+    //     })
 
-        let customElement: any = document.createElement('forsteri-element-5')
+    //     let customElement: any = document.createElement('forsteri-element-5')
 
-        customElement.appendChild(h1)
+    //     customElement.appendChild(h1)
 
-        let _element: HTMLElement = customElement.element
+    //     let _element: HTMLElement = customElement.element
 
-        expect(_element.childNodes[0]).toEqual(h1)
-    })
+    //     expect(_element.childNodes[0]).toEqual(h1)
+    // })
 })
