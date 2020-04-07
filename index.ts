@@ -16,6 +16,7 @@ type ForsteriElement = ForsteriElement__EnsureElement | Text
 
 interface ForsteriElement__EnsureElement extends HTMLElement {
     vnode?: ForsteriVNode
+    events?: any
 }
 
 interface ForsteriElement__Fragment extends DocumentFragment {
@@ -48,7 +49,7 @@ const h = (
         attributes: Object | null = {},
         ...childNodes: ForsteriVNode[]
     ): ForsteriNode => ({
-        nodeName: nodeName.toLowerCase(),
+        nodeName: nodeName === null ? 'fragment' : nodeName.toLowerCase(),
         attributes: attributes === null ? false : attributes,
         childNodes
     }),
@@ -80,6 +81,10 @@ const h = (
                     ? (_attributes[property] = comparedSubsetAttributes)
                     : null
             }
+
+            /* State doesn't reflect, need a clean up */
+            if (property.startsWith('on'))
+                return (_attributes[property] = attributes[property])
 
             if (typeof attributes[property] === 'function')
                 if (
@@ -203,12 +208,16 @@ const h = (
                     eventName.charAt(0).toLowerCase() +
                     eventName.slice(1, eventName.length)
 
+                if (typeof ref.events === 'undefined') ref.events = {}
+
                 try {
                     ref.removeEventListener(
                         eventName,
-                        (ref.vnode as any)[eventName]
+                        ref.events[eventName],
+                        false
                     )
                 } catch (err) {
+                    console.log(err)
                 } finally {
                     ref.addEventListener(
                         eventName,
@@ -216,6 +225,8 @@ const h = (
                         false
                     )
                 }
+
+                ref.events[eventName] = attributes[property]
             } else if (shallow)
                 ref.setAttribute(property, attributes[property] as any)
             else (ref as any)[property] = attributes[property]
@@ -364,13 +375,7 @@ const h = (
 
             if (childNodes.length >= ref.childNodes.length) return
 
-            /* Remove child in-case of old child which over */
-            /* Don't remove children */
-            if (
-                (((ref as ForsteriElement__EnsureElement)
-                    .vnode as ForsteriNode__EnsureDiff).childNodes[0]
-                    .nodeName as string).toLowerCase() !== 'children'
-            )
+            let cleanup = () =>
                 Array.apply(
                     null,
                     new Array(ref.childNodes.length - childNodes.length)
@@ -380,6 +385,19 @@ const h = (
                     .forEach((index) => {
                         ref.removeChild(ref.childNodes[index])
                     })
+
+            /* Remove child in-case of old child which over */
+            /* Don't remove children */
+            try {
+                if (
+                    (((ref as ForsteriElement__EnsureElement)
+                        .vnode as ForsteriNode__EnsureDiff).childNodes[0]
+                        .nodeName as string).toLowerCase() !== 'children'
+                )
+                    cleanup()
+            } catch (err) {
+                cleanup()
+            }
         }
 
         if (node.nodeName === 'fragment')

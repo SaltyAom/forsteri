@@ -11,7 +11,7 @@ const createElement = (
     attributes: Object | null = {},
     ...childNodes: ForsteriVNode[]
 ): ForsteriNode => ({
-    nodeName: nodeName.toLowerCase(),
+    nodeName: nodeName === null ? "fragment" : nodeName.toLowerCase(),
     attributes: attributes === null ? false : attributes,
     childNodes
 })
