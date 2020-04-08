@@ -593,7 +593,7 @@ let Card = () => (
 )
 ```
 
-##Lifecycle
+# Lifecycle
 Lifecycle is introduced to Forsteri 0.2.
 When we update a state, we might wanted to perform some condition which why lifecycle is introduced.
 

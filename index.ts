@@ -433,7 +433,7 @@ const h = (
         view: ForsteriComponent<StateType, PropsType>
         state?: StateType
         props?: PropsType
-        onCreated?: (state: State<StateType>) => () => any
+        onCreated?: (state: State<StateType>) => (() => any) | void
     }) => {
         if (!customElements.get(component))
             customElements.define(
@@ -443,7 +443,7 @@ const h = (
                     state: StateType
                     props: any
                     observer: MutationObserver
-                    lifecycle: () => any
+                    lifecycle: any
 
                     constructor() {
                         super()
@@ -540,7 +540,8 @@ const h = (
                                 this.state,
                                 this.props,
                                 view,
-                                this.element
+                                this.element,
+                                1
                             )
                         )
                     }
@@ -559,15 +560,22 @@ const h = (
         state: StateType,
         props: PropsType,
         view: ForsteriComponent<StateType, PropsType>,
-        element: ShadowRoot | ForsteriElement__EnsureElement
+        element: ShadowRoot | ForsteriElement__EnsureElement,
+        initial = 0
     ): State<StateType> => {
         let _state: any = Object.assign({}, state),
             _props = Object.assign({}, props),
-            _render = (_state: StateType) => {
+            _render = (_state: StateType, initial = 0) => {
                 requestAnimationFrame(() => {
                     render(
                         view(
-                            composeState(_state, _props, view, element),
+                            composeState(
+                                _state,
+                                _props,
+                                view,
+                                element,
+                                initial === 1 ? 2 : initial
+                            ),
                             _props as any
                         ),
                         element as ForsteriElement__EnsureElement | ShadowRoot
@@ -578,7 +586,7 @@ const h = (
             _listener: Array<{
                 listener: Array<keyof StateType> | true
                 callback: Function
-            }> = []
+            }> = []        
 
         return {
             state: _state,
@@ -601,12 +609,16 @@ const h = (
                 property: keyof StateType,
                 value: Partial<StateType[T]> & Object
             ): StateType[T] => {
-                _state[property] = Object.assign(_state, value)
+                _state[property] = Object.assign(_state[property], value)
 
-                _render(_state)
+                _render(_state, initial)
 
                 _listener.forEach(({ listener, callback }) => {
-                    if (listener === true || listener.includes(property))
+                    if (
+                        listener === true ||
+                        listener.includes(property) ||
+                        initial === 2
+                    )
                         callback(_state)
                 })
 
@@ -620,6 +632,9 @@ const h = (
                     listener: property,
                     callback
                 })
+
+                if(initial === 2)
+                    callback()
             }
         }
     },
