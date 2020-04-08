@@ -1,6 +1,6 @@
 # Forsteri
 
-Reusable reactive Web Component with Virtual DOM in 1KB (gzipped).
+Reusable reactive Web Component with Virtual DOM in 2KB (gzipped).
 
 ## Inspiration
 
@@ -34,9 +34,13 @@ Feature:
 -   No class, just function.
 -   Encapsulation, ensure how the component looks.
 -   Expressive Vanilla like API structure.
--   Very fast and small. (1.7KB Gzipped)
+-   Very fast and small. (1.8KB Gzipped)
 -   First Class TypeScript support.
 -   Zero Dependencies.
+
+[![gzip size](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=gzip&label=gzip)](https://unpkg.com/preact/dist/preact.min.js)
+[![brotli size](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=brotli&label=brotli)](https://unpkg.com/preact/dist/preact.min.js)
+
 
 ### And how does the syntax looks like?
 
@@ -91,6 +95,12 @@ Including:
 -   Development environment and production built.
 -   Minimal Starter suitable for higher integration.
 -   TypeScript built-in.
+
+#### Or setting up your own development environment [![npm](https://img.shields.io/npm/v/preact.svg)](http://npm.im/preact)
+Start by installing Forsteri
+```bash
+yarn add forsteri
+```
 
 ## JSX and HyperScript
 
@@ -578,3 +588,7 @@ let Card = () => (
 To make sure our component keeps as same as should looks like. It only displayed when every stylesheet its required loaded.
 
 That's pretty all important concept of Forsteri.
+
+![Contains Cat GIF](https://forthebadge.com/images/featured/featured-contains-cat-gifs.svg)
+
+![Chocola clapping - Nekopara](https://media.tenor.com/images/b12e29a35e5ede808b6b8038ef687415/tenor.gif)
