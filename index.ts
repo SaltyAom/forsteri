@@ -225,7 +225,6 @@ const h = (
                         false
                     )
                 } catch (err) {
-                    console.log(err)
                 } finally {
                     ref.addEventListener(
                         eventName,
@@ -381,14 +380,16 @@ const h = (
                 } else ref.appendChild(create(child))
             })
 
-            if (childNodes.length >= ref.childNodes.length) return
+            let _childNodesWithoutFragment = childNodes.filter(({ nodeName }) => nodeName !== "fragment")
+
+            if (_childNodesWithoutFragment.length >= ref.childNodes.length) return
 
             let cleanup = () =>
                 Array.apply(
                     null,
-                    new Array(ref.childNodes.length - childNodes.length)
+                    new Array(ref.childNodes.length - _childNodesWithoutFragment.length)
                 )
-                    .map((_, index) => index + childNodes.length)
+                    .map((_, index) => index + _childNodesWithoutFragment.length)
                     .reverse()
                     .forEach((index) => {
                         ref.removeChild(ref.childNodes[index])
@@ -580,13 +581,17 @@ const h = (
                         ),
                         element as ForsteriElement__EnsureElement | ShadowRoot
                     )
+                    reflectChildren(
+                        element,
+                        (element.getRootNode() as ShadowRoot).host.childNodes
+                    )
                 })
                 return _state
             },
             _listener: Array<{
                 listener: Array<keyof StateType> | true
                 callback: Function
-            }> = []        
+            }> = []
 
         return {
             state: _state,
@@ -596,7 +601,9 @@ const h = (
             ): StateType[T] => {
                 _state[property] = value
 
-                _render(_state)
+                requestAnimationFrame(() => {
+                    _render(_state)
+                })
 
                 _listener.forEach(({ listener, callback }) => {
                     if (listener === true || listener.includes(property))
@@ -633,15 +640,14 @@ const h = (
                     callback
                 })
 
-                if(initial === 2)
-                    callback()
+                if (initial === 2) callback()
             }
         }
     },
     reflectChildren = (
         element: ShadowRoot | any,
         childNodes: NodeListOf<ChildNode>
-    ) =>
+    ) => {
         element
             .querySelectorAll('children')
             .forEach((_element: ForsteriElement__EnsureElement) => {
@@ -653,8 +659,9 @@ const h = (
 
                 if (_element.parentElement !== null)
                     _element.parentElement.replaceChild(fragment, _element)
-                else element.replaceChild(fragment, _element)
+                else _element.getRootNode().replaceChild(fragment, _element)
             })
+    }
 
 export {
     h,
