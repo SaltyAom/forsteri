@@ -8,6 +8,8 @@ Virtual DOM has been introduced to Web Development for many year. The key take a
 
 Each library has it's own ecosystem and trying to make itself reusable. But the one take away is, they could only reuse in it's own environment which means working across multiple library on large-scale project is lock down.
 
+While most library with Virtual DOM size are too large for many developer to tolerate. Forsteri is inspired by Preact of how small Virtual DOM could be.
+
 But how could we make a component to be reusable and still gaining benefit from Virtual DOM? So just create one, a simple and light-weight one which connect each component across many libraries.
 
 ## Reusable + Virtual DOM
@@ -61,6 +63,15 @@ And add `my-element` to HTML.
     <my-element></my-element>
 </body>
 ```
+
+## Performance
+Forsteri use Virtual DOM to compare the difference between DOM. This proven has better performance than rewrite the whole DOM node and re-create one by one.
+
+Forsteri is optimized for effective DOM manipulation. Contrast to React, Forsteri use diffing algorithms betweeen two object instead of an actual DOM node. Which is significantly faster.
+
+As the component splited into multiple component and landed on each node. The component itself could never diff into the other, means it only diff and end in itself instead of finding the difference from the whole page.
+
+This powered Forsteri to be very fast and remove unnecessary algorithms to find difference between each component.
 
 # Getting Started
 
@@ -227,7 +238,7 @@ registerComponent({
 
 ## State
 
-Like angular, react and vue, Vanilla Milk also has state.
+Like Angular, React and Vue, Forsteri also has state.
 State is a variable which responsible for storing data and display it to the view.
 
 When it the state changed, the it suddenly reflect to the view, update only its part.
@@ -507,6 +518,32 @@ let Card = () <children />
 
 This will render `<my-card />` with `<h1>Hello World</h1>` inside.
 
+When Children is rendered, it will become static skip the diffing algorithms when children is found, but as the children moved, to whole child node will be rewritten thus converting an unpredictable node is unefficient as the children designed to not be changed very often and shallow.
+
+If wanted a complex children inside Forsteri Element while still have a Virtual DOM. You can defined a new Forsteri Element as a children of another Forsteri Element. This will ensure that Children as Virtual DOM.
+
+As the child goes static, it's best practice to make sure vNode with the same level might become static. It's recommended to place `children as an isolated child`
+
+```javascript
+// Do this
+let Card = () => {
+    <main>
+        <h1>Hello World</h1>
+        <section>
+            <children />
+        </section>
+    </main>
+}
+
+// Not this
+let Card = () => {
+    <main>
+        <h1>Hello World</h1>
+        <children />
+    </main>
+}
+```
+
 ## Encapsulation
 
 Shadow DOM is used to encapsulate logic and style. Preventing an unexpected change while working in multiple library.
@@ -527,7 +564,7 @@ h1 {
 let Card = () => <h1>Title</h1> // Doesn't affected by style.css
 ```
 
-To use external stylesheet in Milk Component, you can assign stylesheet in the component instead.
+To use external stylesheet in Forsteri Component, you can assign stylesheet in a component instead.
 
 ```javascript
 let Card = () => (
