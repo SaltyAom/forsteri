@@ -179,22 +179,6 @@ By default, Forsteri use `babel-plugin-react-jsx` and define pragma with `babel-
 
 Forsteri is inspired by React's Function Component. Defining a simple function which contains logical expression.
 
-```javascript
-const Card = <
-    StateType extends Object,
-    PropsType extends string[] as const
->(
-    stateObject: State<StateType> {
-        state: StateType,
-        set: (
-            key: keyof StateType,
-            value: StateType[keyof StateType]
-        ) => StateType
-    },
-    props: Record<PropsType[number], string>)
-) => ForsteriVNode
-```
-
 Which can be typed like this in TypeScript:
 
 ```javascript
@@ -203,7 +187,7 @@ import { h, ForsteriComponent } from 'forsteri'
 const state = { message: 'Hello World' },
     props = ['title'],
     View: ForsteriComponent<typeof state, typeof props> = (
-        { state: { message }, set },
+        { state: { message } },
         { title }
     ) => {
         return <h1>Hello World</h1>
@@ -223,17 +207,6 @@ You could write view like how you write in HTML. Forsteri use native attributes 
 ## Register Component
 
 `registerComponent()` is a function which define how component should represented to browser. How should it's tag looks like, how should it render, what should it contains?
-
-It receive these following parameter:
-
-```javascript
-registerComponent({
-    component: string,         // Define component's name
-    view: ForsteriComponent,   // Function component which we declared
-    state?: State<StateType>,  // State
-    props?: Props<PropsType>   // Props
-})
-```
 
 In most basic way its important part is:
 
@@ -345,7 +318,7 @@ Then we attach event and invoke `set()`.
 ```javascript
 <section>
     <h1>{counter}</h1>
-    <button onClick={() => set('counter', counter + 1)>Increase</button>
+    <button onClick={() => set('counter', counter + 1)}>Increase</button>
 </section>
 ```
 
@@ -380,6 +353,41 @@ registerComponent({
 #### In action
 
 Now every time we click the button, it's `counter` would increase by one.
+
+## Way to update state
+As Forsteri is state concept is immutatable which couldn't directly reassign. 
+
+There's 2 type of state mutation in Forsteri. `set` and `update`
+* `set` - Completely rewrite a state.
+* `update` - Rewrite only part of state.
+
+Set is perfectly suitable to mutate every thing except object. Using set to update and Object, you have to create a copy of an existed object then mutate only some part. Then completly rewrite a state with a mutated state. which is why `update` is introduced to made this simple.
+
+`update` only receive part of a state object then automatically mutate and update itself.
+
+Consider using `set` for a complete rewrite of state otherwise you mostly might wanted to use `update`.
+
+```javascript
+const state = {
+    myObject: {
+        name: 'forsteri',
+        value: 'Nice component'
+    }
+}
+
+set('myObject', { value: 'Nice library' }) 
+// myObject: { 
+//    value: 'Nice library' 
+// }
+// property 'name' is missing
+
+update('myObject', { value: 'Nice library' }) 
+// myObject: { 
+//    name: 'forsteri' 
+//    value: 'Nice library' 
+// }
+// Only 'value' is changed
+```
 
 ## Props
 
@@ -583,6 +591,110 @@ let Card = () => (
         <h1>Title</h1> // Affected by style.css
     </fragment>
 )
+```
+
+##Lifecycle
+Lifecycle is introduced to Forsteri 0.2.
+When we update a state, we might wanted to perform some condition which why lifecycle is introduced.
+
+## on()
+
+`on()` is like a side-effect when state mutation(s) are perfomed. You can capture the the moment and perform some additional condition.
+
+`on()` is introduced to create a side-effect performed when state changed. As an addtional helpers in state object
+
+
+```javascript
+const Counter = ({
+    state: { counter },
+    set,
+    on
+}) => {
+    on(['counter'], (newState) => {
+        console.log(counter, newState.counter) // 0, 1
+    })
+
+    return <button 
+        onClick={() => set('counter', counter + 1)}
+    >
+        Increase
+    </button>
+}
+```
+
+Every time counter is changed, `on` function will invoked the callback with `newState` a complete new mutated state which you can compared with the current one.
+
+`on()` receive two parameters
+* property - Array of state key you wanted to create a side-effect.
+* callback - Side-effect function you wanted to perform.
+
+You can also performed an side-effect on every state with property of `true`
+```javascript
+on(true, (newState) => {
+    console.log(newState) // Perform on every state changed
+})
+```
+
+## onCreated
+
+As the name implied, onCreated is one of the most basic lifecycle. It only occurs when the component is created and rendered.
+
+onCreated is one of the property of `registerComponent`.
+```javascript
+registerComponent({
+    onCreated: ({ state: { counter }, set }) => {
+        // Triggered when component is created
+        doSomething()
+
+        set('counter', counter + 1)
+
+        return () => {
+            // Clean up, triggered when component is destroyed
+            doSomething().unsubscribe()
+        }
+    }
+})
+```
+
+It also receive a state manager and helpers function like function component. So you can set a mutate a state when when you're in lifecycle.
+
+## Typed
+It's best practice to understand the structured of most used utility and how it was typed to fully acheive best possible way to ensure typed an application.
+
+#### Function Component
+```javascript
+const Card = <
+    StateType extends Object,
+    PropsType extends string[] as const
+>(
+    stateObject: State<StateType> {
+        state: StateType,
+        set: (
+            key: keyof StateType,
+            value: StateType[keyof StateType]
+        ) => StateType,
+        update: (
+            key: keyof StateType,
+            value: Partial<StateType[keyof StateType]> & Object
+        ) => StateType,
+        on: (
+            property: true | Array<keyof StateType>, 
+            callback: (newState: StateType) => void
+        ) => void
+    },
+    props: Record<PropsType[number], string>)
+) => ForsteriVNode
+```
+
+#### Register Component
+```javascript
+registerComponent({
+    component: string,           // Define component's name
+    view: ForsteriComponent,     // Function component which we declared
+    state?: State<StateType>,    // State
+    props?: Props<PropsType>     // Props
+    onCreated?: (state: State<StateType>) => () => any  // lifecycle
+})
 ```
 
 To make sure our component keeps as same as should looks like. It only displayed when every stylesheet its required loaded.

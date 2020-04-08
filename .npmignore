@@ -1,3 +1,5 @@
 node_modules
 demo
 .DS_Store
+.github
+__tests__

@@ -42,6 +42,14 @@ interface State<StateType extends Object = {}> {
         key: T,
         value: StateType[T]
     ) => StateType[T]
+    update: <T extends keyof StateType>(
+        key: T,
+        value: Partial<StateType[T]> & Object
+    ) => StateType[T]
+    on: (
+        property: true | Array<keyof StateType>,
+        callback: (newState: StateType) => void
+    ) => void
 }
 
 const h = (
@@ -418,12 +426,14 @@ const h = (
         component,
         view,
         state,
-        props
+        props,
+        onCreated = () => () => {}
     }: {
         component: string
         view: ForsteriComponent<StateType, PropsType>
         state?: StateType
         props?: PropsType
+        onCreated?: (state: State<StateType>) => () => any
     }) => {
         if (!customElements.get(component))
             customElements.define(
@@ -433,12 +443,14 @@ const h = (
                     state: StateType
                     props: any
                     observer: MutationObserver
+                    lifecycle: () => any
 
                     constructor() {
                         super()
 
                         this.state = Object.assign({}, state)
                         this.props = {}
+                        this.lifecycle = () => null
                         props?.forEach((prop) => (this.props[prop] = ''))
 
                         this.element = this.attachShadow({
@@ -476,39 +488,20 @@ const h = (
                         })
 
                         this.observer = new MutationObserver((mutationsList) =>
-                            mutationsList.forEach(() => {
+                            mutationsList.forEach(() =>
                                 requestAnimationFrame(() =>
-                                    this.element
-                                        .querySelectorAll('children')
-                                        .forEach((element) => {
-                                            let fragment = document.createDocumentFragment()
-
-                                            this.childNodes.forEach((child) => {
-                                                fragment.appendChild(
-                                                    child.cloneNode(true)
-                                                )
-                                            })
-
-                                            if (element.parentElement !== null)
-                                                element.parentElement.replaceChild(
-                                                    fragment,
-                                                    element
-                                                )
-                                            else
-                                                this.element.replaceChild(
-                                                    fragment,
-                                                    element
-                                                )
-                                        })
+                                    reflectChildren(
+                                        this.element,
+                                        this.childNodes
+                                    )
                                 )
-                            })
+                            )
                         )
 
                         this.observer.observe(this, {
                             childList: true,
                             subtree: true,
-                            characterData: true,
-                            attributes: true
+                            characterData: true
                         })
                     }
 
@@ -537,33 +530,24 @@ const h = (
                                 this.element
                             )
 
-                            this.element
-                                .querySelectorAll('children')
-                                .forEach((element) => {
-                                    let fragment = document.createDocumentFragment()
-
-                                    this.childNodes.forEach((child) => {
-                                        fragment.appendChild(
-                                            child.cloneNode(true)
-                                        )
-                                    })
-
-                                    if (element.parentElement !== null)
-                                        element.parentElement.replaceChild(
-                                            fragment,
-                                            element
-                                        )
-                                    else
-                                        this.element.replaceChild(
-                                            fragment,
-                                            element
-                                        )
-                                })
+                            reflectChildren(this.element, this.childNodes)
                         })
+                    }
+
+                    connectedCallback() {
+                        this.lifecycle = onCreated(
+                            composeState(
+                                this.state,
+                                this.props,
+                                view,
+                                this.element
+                            )
+                        )
                     }
 
                     disconnectedCallback() {
                         this.observer.disconnect()
+                        this.lifecycle()
                     }
                 }
             )
@@ -578,15 +562,8 @@ const h = (
         element: ShadowRoot | ForsteriElement__EnsureElement
     ): State<StateType> => {
         let _state: any = Object.assign({}, state),
-            _props = Object.assign({}, props)
-
-        return {
-            state: _state,
-            set: <T extends keyof StateType>(
-                property: keyof StateType,
-                value: StateType[T]
-            ): StateType[T] => {
-                _state[property] = value
+            _props = Object.assign({}, props),
+            _render = (_state: StateType) => {
                 requestAnimationFrame(() => {
                     render(
                         view(
@@ -595,25 +572,74 @@ const h = (
                         ),
                         element as ForsteriElement__EnsureElement | ShadowRoot
                     )
-
-                    element.querySelectorAll('children').forEach((child) => {
-                        let fragment = document.createDocumentFragment()
-
-                        ;(element.getRootNode() as ShadowRoot).host.childNodes.forEach(
-                            (child: ChildNode) => {
-                                fragment.appendChild(child.cloneNode(true))
-                            }
-                        )
-
-                        if (child.parentElement !== null)
-                            child.parentElement.replaceChild(fragment, child)
-                        else child.getRootNode().replaceChild(fragment, child)
-                    })
                 })
                 return _state
+            },
+            _listener: Array<{
+                listener: Array<keyof StateType> | true
+                callback: Function
+            }> = []
+
+        return {
+            state: _state,
+            set: <T extends keyof StateType>(
+                property: keyof StateType,
+                value: StateType[T]
+            ): StateType[T] => {
+                _state[property] = value
+
+                _render(_state)
+
+                _listener.forEach(({ listener, callback }) => {
+                    if (listener === true || listener.includes(property))
+                        callback(_state)
+                })
+
+                return _state
+            },
+            update: <T extends keyof StateType>(
+                property: keyof StateType,
+                value: Partial<StateType[T]> & Object
+            ): StateType[T] => {
+                _state[property] = Object.assign(_state, value)
+
+                _render(_state)
+
+                _listener.forEach(({ listener, callback }) => {
+                    if (listener === true || listener.includes(property))
+                        callback(_state)
+                })
+
+                return _state
+            },
+            on: (
+                property: true | Array<keyof StateType>,
+                callback: Function
+            ) => {
+                _listener.push({
+                    listener: property,
+                    callback
+                })
             }
         }
-    }
+    },
+    reflectChildren = (
+        element: ShadowRoot | any,
+        childNodes: NodeListOf<ChildNode>
+    ) =>
+        element
+            .querySelectorAll('children')
+            .forEach((_element: ForsteriElement__EnsureElement) => {
+                let fragment = document.createDocumentFragment()
+
+                childNodes.forEach((child) => {
+                    fragment.appendChild(child.cloneNode(true))
+                })
+
+                if (_element.parentElement !== null)
+                    _element.parentElement.replaceChild(fragment, _element)
+                else element.replaceChild(fragment, _element)
+            })
 
 export {
     h,
