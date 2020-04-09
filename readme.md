@@ -82,7 +82,11 @@ This powered Forsteri to be very fast and remove unnecessary algorithms to find 
 Glad you're interested in Forsteri! Let's take a quick start with a starter template which has a perfect configured environment.
 
 ```bash
-git clone https://github.com/SaltyAom/forsteri-typescript-starter
+// With yarn
+yarn create forsteri-app
+
+// Or with npx
+npx create-forsteria-app
 ```
 
 The starter template has a suitable environment to start trying a web component.
