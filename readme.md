@@ -2,6 +2,8 @@
 
 Reusable reactive Web Component with Virtual DOM in 2KB (gzipped).
 
+![Forsteri](https://repository-images.githubusercontent.com/253240382/0a000000-7b25-11ea-9c73-535912d9d35f)
+
 ## Inspiration
 
 Virtual DOM has been introduced to Web Development for many year. The key take away is to `update only neccessary` thus lead a great step forward in web development.
