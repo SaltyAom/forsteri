@@ -63,6 +63,7 @@
         "dist",
         "demo",
         "pragma/index.ts",
-        "*.d.ts"
+        "*.d.ts",
+        "__tests__"
     ]
 }

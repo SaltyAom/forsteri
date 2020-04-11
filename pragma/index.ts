@@ -7,7 +7,7 @@ interface ForsteriNode {
 }
 
 const createElement = (
-    nodeName: string,
+    nodeName: string  | null,
     attributes: Object | null = {},
     ...childNodes: ForsteriVNode[]
 ): ForsteriNode => ({
