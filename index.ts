@@ -506,6 +506,20 @@ const h = (
                         this.observer = new MutationObserver((mutationsList) =>
                             mutationsList.forEach(() => {
                                 requestAnimationFrame(() => {
+                                    console.log("A")
+                                    render(
+                                        view(
+                                            composeState(
+                                                this.state,
+                                                this.props,
+                                                view,
+                                                this.element
+                                            ),
+                                            this.props
+                                        ),
+                                        this.element
+                                    )
+            
                                     reflectChildren(
                                         this.element,
                                         this.childNodes
