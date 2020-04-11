@@ -53,7 +53,7 @@ interface State<StateType extends Object = {}> {
 }
 
 const h = (
-        nodeName: string,
+        nodeName: string | null,
         attributes: Object | null = {},
         ...childNodes: ForsteriVNode[]
     ): ForsteriNode => ({
@@ -278,7 +278,7 @@ const h = (
 
         return element
     },
-    mapFragment = (vnode: ForsteriNode__EnsureDiff): any[] => {
+    mapFragment = (vnode: ForsteriNode__EnsureDiff, every = false): any[] => {
         /**
          * We only need to map 2 level for each vNode.
          * Mapping all the node is unnecessary since each vNode will map itself anyway.
@@ -296,7 +296,7 @@ const h = (
                                 child as ForsteriNode__EnsureDiff
                             )[0]
 
-                        return child
+                        if (!every) return child
                     }
                 )
 
@@ -307,9 +307,14 @@ const h = (
         node: ForsteriNode,
         element: ShadowRoot | ForsteriElement__EnsureElement
     ) => {
-        if (!element.children.length) return element.appendChild(create(node))
+        let applyDiff = (
+            node: ForsteriNode | string,
+            ref: ForsteriElement,
+            element?: ShadowRoot | ForsteriElement__EnsureElement
+        ) => {
+            if (typeof ref === 'undefined')
+                return element?.appendChild(create(node))
 
-        let applyDiff = (node: ForsteriNode | string, ref: ForsteriElement) => {
             if (isString(node))
                 if (ref.nodeName === '#text')
                     return node !== ref.textContent
@@ -330,12 +335,6 @@ const h = (
                     }
 
             let { nodeName, childNodes } = node as ForsteriNode__EnsureDiff
-
-            if (
-                typeof ref === 'undefined' ||
-                typeof (ref as any).vnode === 'undefined'
-            )
-                return
 
             let diffed = diff(
                 node as ForsteriNode,
@@ -380,22 +379,30 @@ const h = (
                 } else ref.appendChild(create(child))
             })
 
-            let _childNodesWithoutFragment = childNodes.filter(({ nodeName }) => nodeName !== "fragment")
+            let _childNodesWithoutFragment = childNodes.filter(
+                ({ nodeName }) => nodeName !== 'fragment'
+            )
 
-            if (_childNodesWithoutFragment.length >= ref.childNodes.length) return
+            if (_childNodesWithoutFragment.length >= ref.childNodes.length)
+                return
 
             let cleanup = () =>
                 Array.apply(
                     null,
-                    new Array(ref.childNodes.length - _childNodesWithoutFragment.length)
+                    new Array(
+                        ref.childNodes.length -
+                            _childNodesWithoutFragment.length
+                    )
                 )
-                    .map((_, index) => index + _childNodesWithoutFragment.length)
+                    .map(
+                        (_, index) => index + _childNodesWithoutFragment.length
+                    )
                     .reverse()
                     .forEach((index) => {
                         ref.removeChild(ref.childNodes[index])
                     })
 
-            /* Remove child in-case of old child which over */
+            /* Remove child in-case of old child overflow */
             /* Don't remove children */
             try {
                 if (
@@ -409,16 +416,24 @@ const h = (
             }
         }
 
-        if (node.nodeName === 'fragment')
-            (node as ForsteriNode__EnsureDiff).childNodes.forEach(
-                (child, index) => {
-                    applyDiff(
-                        child,
-                        element.childNodes[index] as ForsteriElement
-                    )
-                }
+        if (!(node as ForsteriNode__EnsureDiff).childNodes.length)
+            applyDiff(
+                node,
+                element.childNodes[0] as ForsteriElement__EnsureElement,
+                element
             )
-        else applyDiff(node, element.childNodes[0] as ForsteriElement)
+
+        mapFragment(node as ForsteriNode__EnsureDiff)
+            .flat(Infinity)
+            .forEach((child, index) => {
+                applyDiff(
+                    node.nodeName === 'fragment'
+                        ? child
+                        : Object.assign(node, { childNodes: [child] }),
+                    element.childNodes[index] as ForsteriElement,
+                    element
+                )
+            })
     },
     registerComponent = <
         StateType extends object,
@@ -489,14 +504,14 @@ const h = (
                         })
 
                         this.observer = new MutationObserver((mutationsList) =>
-                            mutationsList.forEach(() =>
-                                requestAnimationFrame(() =>
+                            mutationsList.forEach(() => {
+                                requestAnimationFrame(() => {
                                     reflectChildren(
                                         this.element,
                                         this.childNodes
                                     )
-                                )
-                            )
+                                })
+                            })
                         )
 
                         this.observer.observe(this, {
@@ -602,7 +617,7 @@ const h = (
                 _state[property] = value
 
                 requestAnimationFrame(() => {
-                    _render(_state)
+                    _render(_state, initial)
                 })
 
                 _listener.forEach(({ listener, callback }) => {
@@ -618,7 +633,9 @@ const h = (
             ): StateType[T] => {
                 _state[property] = Object.assign(_state[property], value)
 
-                _render(_state, initial)
+                requestAnimationFrame(() => {
+                    _render(_state, initial)
+                })
 
                 _listener.forEach(({ listener, callback }) => {
                     if (
@@ -640,7 +657,10 @@ const h = (
                     callback
                 })
 
-                if (initial === 2) callback()
+                if (initial === 2) {
+                    callback(_state)
+                    initial = 0
+                }
             }
         }
     },
@@ -667,9 +687,9 @@ export {
     h,
     registerComponent,
     ForsteriComponent,
+    create,
     diff,
-    compareAttributes,
-    create
+    compareAttributes
 }
 
 export default {

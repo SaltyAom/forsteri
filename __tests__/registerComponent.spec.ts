@@ -16,9 +16,6 @@ describe('Register Component', () => {
     it('Should contains element', () => {
         let view = () => h('h1', null, 'Hello World')
 
-        let h1 = document.createElement('h1')
-        h1.appendChild(document.createTextNode('Hello World'))
-
         registerComponent({
             component: 'forsteri-element-2',
             view
@@ -27,14 +24,13 @@ describe('Register Component', () => {
         let customElement: any = document.createElement('forsteri-element-2'),
             _element: HTMLElement = customElement.element
 
-        expect(_element.childNodes[0]).toEqual(h1)
+        expect(_element.childNodes[0].nodeName).toEqual('H1')
     })
 
     it('Should contains fragment in others', () => {
-        let view = () => h('h1', null, h('fragment', null, 'Hello World'))
+        let mockedMessage = 'Hello World'
 
-        let h1 = document.createElement('h1')
-        h1.appendChild(document.createTextNode('Hello World'))
+        let view = () => h('h1', null, h('fragment', null, mockedMessage))
 
         registerComponent({
             component: 'forsteri-element-3',
@@ -44,7 +40,7 @@ describe('Register Component', () => {
         let customElement: any = document.createElement('forsteri-element-3'),
             _element: HTMLElement = customElement.element
 
-        expect(_element.childNodes[0]).toEqual(h1)
+        expect(_element.childNodes[0].textContent).toEqual(mockedMessage)
     })
 
     it('Should contains fragment on root', () => {
@@ -61,7 +57,7 @@ describe('Register Component', () => {
         let customElement: any = document.createElement('forsteri-element-4'),
             _element: HTMLElement = customElement.element
 
-        expect(_element.childNodes[0]).toEqual(h1)
+        expect(_element.childNodes[0].nodeName).toEqual('H1')
     })
 
     // it('Should reflect children', () => {
@@ -81,6 +77,6 @@ describe('Register Component', () => {
 
     //     let _element: HTMLElement = customElement.element
 
-    //     expect(_element.childNodes[0]).toEqual(h1)
+    //     expect(_element.childNodes[0].textContent).toEqual(h1.textContent)
     // })
 })

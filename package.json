@@ -1,7 +1,7 @@
 {
     "name": "forsteri",
     "description": "Reusable reactive Web Component with Virtual DOM in 1KB (gzipped)",
-    "version": "0.2.4",
+    "version": "0.2.10",
     "main": "index.js",
     "typings": "dist/index.d.ts",
     "keywords": [
@@ -16,12 +16,15 @@
     "homepage": "https://github.com/SaltyAom/forsteri",
     "license": "MIT",
     "scripts": {
-        "build": "yarn build:js && yarn build:pragma && yarn build:ts && yarn build:compress && yarn build:size",
+        "build": "yarn build:js && yarn build:pragma && yarn build:ts && yarn build:compress && yarn build:es6 && yarn build:esm && yarn build:umd && yarn build:size",
         "build:js": "tsc --project tsconfig-js.json",
         "build:ts": "rm -rf dist && tsc",
         "build:compress": "terser dist/index.js -o dist/index.js --compress --mangle --wrap exports",
         "build:size": "cd dist && ls -lh",
         "build:pragma": "tsc --project tsconfig-pragma.json",
+        "build:es6": "tsc --project tsconfig-es6.json",
+        "build:esm": "tsc --project tsconfig-esm.json",
+        "build:umd": "tsc --project tsconfig-umd.json",
         "release": "yarn test && yarn build && yarn publish --non-interactive",
         "test": "jest",
         "test:clear": "jest --clearCache"
@@ -29,9 +32,12 @@
     "devDependencies": {
         "@babel/preset-env": "^7.9.0",
         "@babel/preset-typescript": "^7.9.0",
+        "@babel/types": "^7.9.5",
         "@types/jest": "^25.2.1",
         "jest": "^25.2.7",
+        "jest-diff": "^25.2.6",
         "jest-environment-jsdom-sixteen": "^1.0.3",
+        "pretty-format": "^25.2.6",
         "terser": "^4.6.10",
         "ts-jest": "^25.3.1",
         "typescript": "^3.8.3"

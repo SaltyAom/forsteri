@@ -63,6 +63,7 @@
         "dist",
         "demo",
         "index.ts",
-        "*.d.ts"
+        "*.d.ts",
+        "__tests__"
     ]
 }
