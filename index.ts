@@ -685,9 +685,10 @@ const h = (
         childNodes: NodeListOf<ChildNode>
     ) => {
         element
-            .querySelectorAll('children')
+            .querySelectorAll('children, #__children')
             .forEach((_element: ForsteriElement__EnsureElement) => {
                 let childrenWrapper = document.createElement("div")
+                childrenWrapper.id = "__children"
 
                 childNodes.forEach((child) => {
                     childrenWrapper.appendChild(child)
