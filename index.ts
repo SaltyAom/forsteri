@@ -160,10 +160,12 @@ const h = (
                 ] = child)
             else if (
                 (child as ForsteriNode__EnsureDiff).nodeName === 'children'
-            )
+            ) {
+                let childrenNode = (_childNodes as ForsteriVNode[] | false[])[index];
                 return ((_childNodes as ForsteriVNode[] | false[])[
                     index
                 ] = false)
+            }
 
             let diffedNode = diff(
                 child,
@@ -685,15 +687,15 @@ const h = (
         element
             .querySelectorAll('children')
             .forEach((_element: ForsteriElement__EnsureElement) => {
-                let fragment = document.createDocumentFragment()
+                let childrenWrapper = document.createElement("div")
 
                 childNodes.forEach((child) => {
-                    fragment.appendChild(child.cloneNode(true))
+                    childrenWrapper.appendChild(child)
                 })
 
                 if (_element.parentElement !== null)
-                    _element.parentElement.replaceChild(fragment, _element)
-                else _element.getRootNode().replaceChild(fragment, _element)
+                    _element.parentElement.replaceChild(childrenWrapper, _element)
+                else _element.getRootNode().replaceChild(childrenWrapper, _element)
             })
     }
 
