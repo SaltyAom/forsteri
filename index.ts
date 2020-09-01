@@ -109,7 +109,7 @@ const h = (
         return _attributes
     },
     diff = (current: ForsteriVNode, old: ForsteriNode): ForsteriNode => {
-        if (typeof current !== 'string' && current.nodeName === 'children')
+        if (typeof current !== 'string' && current.nodeName === 'slot')
             return {
                 nodeName: false,
                 attributes: false,
@@ -158,14 +158,6 @@ const h = (
                 return ((_childNodes as ForsteriVNode[] | false[])[
                     index
                 ] = child)
-            else if (
-                (child as ForsteriNode__EnsureDiff).nodeName === 'children'
-            ) {
-                let childrenNode = (_childNodes as ForsteriVNode[] | false[])[index];
-                return ((_childNodes as ForsteriVNode[] | false[])[
-                    index
-                ] = false)
-            }
 
             let diffedNode = diff(
                 child,
@@ -343,7 +335,7 @@ const h = (
                 (ref as ForsteriElement__EnsureElement).vnode as ForsteriNode
             )
 
-            if (nodeName === 'children') return
+            if (nodeName === 'slot') return
 
             if (nodeName !== `${ref.nodeName}`.toLowerCase())
                 if (ref.parentElement !== null)
@@ -368,11 +360,7 @@ const h = (
                         typeof ((ref as ForsteriElement__EnsureElement)
                             .vnode as ForsteriNode__EnsureDiff).childNodes[
                             index
-                        ].nodeName === 'undefined' ||
-                        (((ref as ForsteriElement__EnsureElement)
-                            .vnode as ForsteriNode__EnsureDiff).childNodes[
-                            index
-                        ].nodeName as string).toLowerCase() !== 'children'
+                        ].nodeName === 'undefined'
                     )
                         applyDiff(
                             child,
@@ -404,18 +392,7 @@ const h = (
                         ref.removeChild(ref.childNodes[index])
                     })
 
-            /* Remove child in-case of old child overflow */
-            /* Don't remove children */
-            try {
-                if (
-                    (((ref as ForsteriElement__EnsureElement)
-                        .vnode as ForsteriNode__EnsureDiff).childNodes[0]
-                        .nodeName as string).toLowerCase() !== 'children'
-                )
-                    cleanup()
-            } catch (err) {
-                cleanup()
-            }
+            cleanup()
         }
 
         if (!(node as ForsteriNode__EnsureDiff).childNodes.length)
@@ -460,7 +437,6 @@ const h = (
                     element: ShadowRoot | this
                     state: StateType
                     props: any
-                    observer: MutationObserver
                     lifecycle: any
 
                     constructor() {
@@ -504,37 +480,6 @@ const h = (
                                     })
                             })
                         })
-
-                        this.observer = new MutationObserver((mutationsList) =>
-                            mutationsList.forEach(() => {
-                                requestAnimationFrame(() => {
-                                    console.log("A")
-                                    render(
-                                        view(
-                                            composeState(
-                                                this.state,
-                                                this.props,
-                                                view,
-                                                this.element
-                                            ),
-                                            this.props
-                                        ),
-                                        this.element
-                                    )
-            
-                                    reflectChildren(
-                                        this.element,
-                                        this.childNodes
-                                    )
-                                })
-                            })
-                        )
-
-                        this.observer.observe(this, {
-                            childList: true,
-                            subtree: true,
-                            characterData: true
-                        })
                     }
 
                     static get observedAttributes() {
@@ -561,8 +506,6 @@ const h = (
                                 ),
                                 this.element
                             )
-
-                            reflectChildren(this.element, this.childNodes)
                         })
                     }
 
@@ -579,7 +522,6 @@ const h = (
                     }
 
                     disconnectedCallback() {
-                        this.observer.disconnect()
                         this.lifecycle()
                     }
                 }
@@ -611,10 +553,6 @@ const h = (
                             _props as any
                         ),
                         element as ForsteriElement__EnsureElement | ShadowRoot
-                    )
-                    reflectChildren(
-                        element,
-                        (element.getRootNode() as ShadowRoot).host.childNodes
                     )
                 })
                 return _state
@@ -679,25 +617,6 @@ const h = (
                 }
             }
         }
-    },
-    reflectChildren = (
-        element: ShadowRoot | any,
-        childNodes: NodeListOf<ChildNode>
-    ) => {
-        element
-            .querySelectorAll('children, #__children')
-            .forEach((_element: ForsteriElement__EnsureElement) => {
-                let childrenWrapper = document.createElement("div")
-                childrenWrapper.id = "__children"
-
-                childNodes.forEach((child) => {
-                    childrenWrapper.appendChild(child)
-                })
-
-                if (_element.parentElement !== null)
-                    _element.parentElement.replaceChild(childrenWrapper, _element)
-                else _element.getRootNode().replaceChild(childrenWrapper, _element)
-            })
     }
 
 export {

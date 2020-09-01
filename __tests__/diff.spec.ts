@@ -3,7 +3,7 @@ import { diff, h } from '../index.ts'
 
 describe('Diffing', () => {
     it('should return false if it is children', () => {
-        let diffed = diff(h('children'), h('h2'))
+        let diffed = diff(h('slot'), h('h2'))
 
         expect(diffed).toEqual({
             nodeName: false,
