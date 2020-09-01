@@ -40,8 +40,8 @@ Feature:
 -   First Class TypeScript support.
 -   Zero Dependencies.
 
-[![gzip size](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=gzip&label=gzip)](https://unpkg.com/preact/dist/preact.min.js)
-[![brotli size](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=brotli&label=brotli)](https://unpkg.com/preact/dist/preact.min.js)
+[![gzip size](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=gzip&label=gzip)](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=gzip&label=gzip)
+[![brotli size](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=brotli&label=brotli)](http://img.badgesize.io/https://unpkg.com/forsteri/dist/index.js?compression=brotli&label=brotli)
 
 
 ### And how does the syntax looks like?
@@ -102,7 +102,7 @@ Including:
 -   Minimal Starter suitable for higher integration.
 -   TypeScript built-in.
 
-#### Or setting up your own development environment [![npm](https://img.shields.io/npm/v/preact.svg)](http://npm.im/preact)
+#### Or setting up your own development environment [![npm](https://img.shields.io/npm/v/forsteri.svg)](http://npm.im/forsteri)
 Start by installing Forsteri
 ```bash
 yarn add forsteri
